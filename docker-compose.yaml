@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:16
+    container_name: mitarbeiterverwaltung-db
+    environment:
+      POSTGRES_DB: Administration
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # crea el schema Employee al iniciar
+      - ./db/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Administration"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: mitarbeiterverwaltung-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    container_name: mitarbeiterverwaltung-app
+    depends_on:
+      - db
+      - rabbitmq
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_APPLICATION_NAME: mitarbeiterverwaltung
+
+      # Postgres (ojo: localhost -> db)
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/Administration
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: Password
+
+      SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_PROPERTIES_HIBERNATE_DEFAULT_SCHEMA: Employee
+
+      # RabbitMQ (ojo: localhost -> rabbitmq)
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: guest
+      SPRING_RABBITMQ_PASSWORD: guest
+
+volumes:
+  pgdata:
+
