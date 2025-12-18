@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mitarbeiterverwaltung
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mitarbeiterverwaltung
+  template:
+    metadata:
+      labels:
+        app: mitarbeiterverwaltung
+    spec:
+      containers:
+        - name: mitarbeiterverwaltung
+          image: mitarbeiterverwaltung:0.0.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://mitarbeiterverwaltung-db:5432/Administration
+            - name: SPRING_DATASOURCE_USERNAME
+              value: postgres
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: Password
+            - name: SPRING_RABBITMQ_HOST
+              value: rabbitmq
+            - name: SPRING_RABBITMQ_PORT
+              value: "5672"
+            - name: SPRING_RABBITMQ_USERNAME
+              value: guest
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: guest
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mitarbeiterverwaltung
+spec:
+  selector:
+    app: mitarbeiterverwaltung
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
