@@ -36,7 +36,10 @@ jobs:
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
+            type=ref,event=branch
             type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
             type=sha,format=short,prefix=sha-
           flavor: |
             latest=true
